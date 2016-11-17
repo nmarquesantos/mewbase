@@ -1,14 +1,14 @@
 package com.tesco.mewbase;
 
+import com.tesco.mewbase.auth.DummyAuthProvider;
 import com.tesco.mewbase.client.Client;
 import com.tesco.mewbase.client.ClientOptions;
 import com.tesco.mewbase.log.impl.file.FileLogManagerOptions;
 import com.tesco.mewbase.server.Server;
 import com.tesco.mewbase.server.ServerOptions;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClientOptions;
-import io.vertx.core.net.NetServerOptions;
-import io.vertx.core.net.PemKeyCertOptions;
-import io.vertx.core.net.PemTrustOptions;
+
 import io.vertx.ext.unit.TestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +25,10 @@ public class ServerTestBase extends MewbaseTestBase {
 
     private final static String CERT_PATH = "src/test/resources/server-cert.pem";
     private final static String KEY_PATH = "src/test/resources/server-key.pem";
+
+    protected static final String USERNAME = "mewbase";
+    protected static final String PASSWORD = "password";
+
     protected Server server;
     protected Client client;
 
@@ -39,6 +43,7 @@ public class ServerTestBase extends MewbaseTestBase {
         ClientOptions clientOptions = createClientOptions();
 
         server = Server.newServer(serverOptions);
+
         CompletableFuture<Void> cfStart = server.start();
         cfStart.get();
 
@@ -59,10 +64,15 @@ public class ServerTestBase extends MewbaseTestBase {
         FileLogManagerOptions fileLogManagerOptions = new FileLogManagerOptions().setLogDir(logDir.getPath());
 
         return new ServerOptions().setChannels(new String[]{TEST_CHANNEL_1, TEST_CHANNEL_2})
-                .setFileLogManagerOptions(fileLogManagerOptions);
+                .setFileLogManagerOptions(fileLogManagerOptions)
+                .setAuthProvider(new DummyAuthProvider(USERNAME, PASSWORD));
     }
 
     protected ClientOptions createClientOptions() {
-        return new ClientOptions().setNetClientOptions(new NetClientOptions());
+        JsonObject authInfo = new JsonObject();
+        authInfo.put("username", USERNAME);
+        authInfo.put("password", PASSWORD);
+
+        return new ClientOptions().setNetClientOptions(new NetClientOptions()).setAuthInfo(authInfo);
     }
 }

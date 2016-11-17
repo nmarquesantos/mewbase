@@ -21,6 +21,7 @@ package com.tesco.mewbase.bson;
 
 import io.vertx.core.VertxException;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 
 import java.io.*;
 import java.time.Instant;
@@ -439,6 +440,19 @@ public class BsonObject implements Iterable<Map.Entry<String, Object>> {
         Objects.requireNonNull(key);
         Object val = getValue(key);
         return val != null || map.containsKey(key) ? val : def;
+    }
+
+    /**
+     * Get the JsonObject value with the specified key
+     *
+     * @param key the key to lookup
+     * @param def the default value to use if the entry is not present
+     * @return the value or {@code def} if no entry present
+     */
+    public JsonObject getJsonObject(String key, JsonObject def) {
+        Objects.requireNonNull(key);
+        Object val =  this.map.get("map");
+        return val != null ? new JsonObject((Map<String, Object>) val) : def;
     }
 
     /**

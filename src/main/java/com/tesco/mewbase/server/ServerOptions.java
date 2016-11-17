@@ -4,6 +4,7 @@ import com.tesco.mewbase.log.impl.file.FileLogManagerOptions;
 import io.vertx.core.net.NetServerOptions;
 
 import java.util.Arrays;
+import io.vertx.ext.auth.AuthProvider;
 
 /**
  * Created by tim on 22/09/16.
@@ -16,6 +17,7 @@ public class ServerOptions {
     private String[] channels;
     private FileLogManagerOptions fileLogManagerOptions = new FileLogManagerOptions();
     private NetServerOptions netServerOptions = new NetServerOptions().setPort(DEFAULT_PORT).setHost(DEFAULT_HOST);
+    private AuthProvider authProvider;
 
     public String[] getChannels() {
         return channels;
@@ -65,5 +67,14 @@ public class ServerOptions {
         result = 31 * result + (fileLogManagerOptions != null ? fileLogManagerOptions.hashCode() : 0);
         result = 31 * result + (netServerOptions != null ? netServerOptions.hashCode() : 0);
         return result;
+    }
+
+    public AuthProvider getAuthProvider() {
+        return authProvider;
+    }
+
+    public ServerOptions setAuthProvider(AuthProvider authProvider) {
+        this.authProvider = authProvider;
+        return this;
     }
 }

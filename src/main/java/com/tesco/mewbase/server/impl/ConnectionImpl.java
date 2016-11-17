@@ -1,5 +1,6 @@
 package com.tesco.mewbase.server.impl;
 
+import com.tesco.mewbase.bson.BsonAuthenticationParser;
 import com.tesco.mewbase.bson.BsonObject;
 import com.tesco.mewbase.common.ReadStream;
 import com.tesco.mewbase.common.SubDescriptor;
@@ -8,7 +9,9 @@ import com.tesco.mewbase.log.Log;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetSocket;
+import io.vertx.ext.auth.AuthProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +33,7 @@ public class ConnectionImpl implements ServerFrameHandler {
     private final DocManager docManager;
     private final Map<Integer, SubscriptionImpl> subscriptionMap = new ConcurrentHashMap<>();
     private final PriorityQueue<WriteHolder> pq = new PriorityQueue<>();
+    private AuthProvider authProvider;
     private boolean authorised;
     private int subSeq;
     private long writeSeq;
@@ -43,15 +47,45 @@ public class ConnectionImpl implements ServerFrameHandler {
         this.docManager = docManager;
     }
 
+    public ConnectionImpl(ServerImpl server, NetSocket netSocket, Context context, DocManager docManager, AuthProvider authProvider) {
+        netSocket.handler(new Codec(this).recordParser());
+        this.server = server;
+        this.socket = netSocket;
+        this.context = context;
+        this.docManager = docManager;
+        this.authProvider = authProvider;
+    }
+
     @Override
     public void handleConnect(BsonObject frame) {
         checkContext();
-        // TODO auth
         // TODO version checking
-        authorised = true;
-        BsonObject resp = new BsonObject();
-        resp.put(Codec.RESPONSE_OK, true);
-        writeResponse(Codec.RESPONSE_FRAME, resp, getWriteSeq());
+
+
+        //this is necessary as the ClientOptions object will have
+        //a JSONObject attribute. I believe this would be the best way to make it pluggable
+        BsonObject bsonAuthInfo = (BsonObject) frame.getValue(Codec.AUTH_INFO);
+        bsonAuthInfo.getJsonObject("map", new JsonObject());
+
+        JsonObject authInfo = BsonAuthenticationParser.getDummyAuthInfo(bsonAuthInfo);
+
+        authProvider.authenticate(authInfo, re -> {
+            BsonObject resp = new BsonObject();
+            if (re.succeeded()) {
+                logger.info("authentication successful for principal {}", re.result().principal());
+                authorised = true;
+
+                resp.put(Codec.RESPONSE_OK, true);
+            } else {
+                resp.put(Codec.RESPONSE_OK, false);
+
+                //TODO: where to specify an error code?
+                resp.put(Codec.RESPONSE_ERRCODE, "INVALID_AUTH");
+                resp.put(Codec.RESPONSE_ERRMSG, re.cause().getMessage());
+            }
+
+            writeResponse(Codec.RESPONSE_FRAME, resp, getWriteSeq());
+        });
     }
 
     @Override

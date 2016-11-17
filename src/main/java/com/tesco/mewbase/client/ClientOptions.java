@@ -1,5 +1,6 @@
 package com.tesco.mewbase.client;
 
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClientOptions;
 
 /**
@@ -13,6 +14,7 @@ public class ClientOptions {
     private String host = DEFAULT_HOST;
     private int port = DEFAULT_PORT;
     private NetClientOptions netClientOptions = new NetClientOptions();
+    private JsonObject authInfo;
 
     public String getHost() {
         return host;
@@ -38,6 +40,15 @@ public class ClientOptions {
 
     public ClientOptions setNetClientOptions(NetClientOptions netClientOptions) {
         this.netClientOptions = netClientOptions;
+        return this;
+    }
+
+    public JsonObject getAuthInfo() {
+        return authInfo;
+    }
+
+    public ClientOptions setAuthInfo(JsonObject authInfo) {
+        this.authInfo = authInfo;
         return this;
     }
 

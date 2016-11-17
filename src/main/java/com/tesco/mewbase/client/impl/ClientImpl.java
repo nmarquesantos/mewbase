@@ -2,14 +2,13 @@ package com.tesco.mewbase.client.impl;
 
 import com.tesco.mewbase.bson.BsonObject;
 import com.tesco.mewbase.client.*;
-import com.tesco.mewbase.common.Delivery;
 import com.tesco.mewbase.common.SubDescriptor;
 import com.tesco.mewbase.server.impl.Codec;
 import com.tesco.mewbase.util.AsyncResCF;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.NetClient;
-import io.vertx.core.net.NetClientOptions;
 import io.vertx.core.net.NetSocket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -287,10 +286,14 @@ public class ClientImpl implements Client, ClientFrameHandler {
     private synchronized void sendConnect(CompletableFuture cfConnect, NetSocket ns) {
         netSocket = ns;
         netSocket.handler(new Codec(this).recordParser());
+        //TODO: THIS IS WHERE WE INJECT THE AUTH DETAILS
+        JsonObject authInfo = clientOptions.getAuthInfo();
 
         // Send the CONNECT frame
         BsonObject frame = new BsonObject();
         frame.put(Codec.CONNECT_VERSION, "0.1");
+        frame.put(Codec.AUTH_INFO, authInfo);
+
         Buffer buffer = Codec.encodeFrame(Codec.CONNECT_FRAME, frame);
         connectResponse = resp -> connected(cfConnect, resp);
         netSocket.write(buffer);

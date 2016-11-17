@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.undercouch.bson4jackson.BsonFactory;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.EncodeException;
+import io.vertx.core.json.JsonObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -111,6 +112,8 @@ public class Bson {
             val = Base64.getEncoder().encodeToString((byte[]) val);
         } else if (val instanceof Instant) {
             val = ISO_INSTANT.format((Instant) val);
+        } else if (val instanceof JsonObject) {
+            // OK
         } else {
             throw new IllegalStateException("Illegal type in BsonObject: " + val.getClass());
         }
